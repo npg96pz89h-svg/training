@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Run Plan">
+<title>Run Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1f5;--card:#fff;--ink:#16202e;--mute:#5d6b7e;--line:#d5dce6;
+--easy:#3b82c4;--qual:#e08a00;--long:#1d7f6e;--race:#c0392b;--warn:#a15c00;--warnbg:#fff3dc;
+--f1:"Barlow Condensed","Arial Narrow",sans-serif;--f2:"Barlow",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1620;--card:#18222f;--ink:#e8eef6;--mute:#93a3b8;--line:#2a3646;
+--easy:#5aa2e0;--qual:#f0a020;--long:#35b09c;--race:#ee6a5a;--warn:#f0b050;--warnbg:#3a2c10}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.4 var(--f2);padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.wrap{max-width:560px;margin:0 auto;padding:16px}
+h1{font:700 30px/1 var(--f1);margin:0}
+.sub{color:var(--mute);margin:4px 0 14px}
+.nav{display:flex;align-items:center;gap:8px;margin:8px 0}
+.nav button{font:700 22px var(--f1);width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.nav .mid{flex:1;text-align:center}
+.mid b{font:700 22px var(--f1);display:block}
+.mid span{color:var(--mute);font-size:14px}
+.sum{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
+.chip{font-size:13px;padding:3px 10px;border-radius:99px;border:1px solid var(--line);background:var(--card)}
+.day{margin:10px 0}
+.dh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.dh b{font:700 18px var(--f1)}
+.dh.today b{color:var(--qual)}
+.gym{font-size:13px;border:1px solid var(--line);background:transparent;color:var(--mute);border-radius:99px;padding:3px 10px}
+.gym.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.rest{color:var(--mute);font-size:14px;padding:8px 12px;border:1px dashed var(--line);border-radius:10px}
+.s{background:var(--card);border-radius:12px;border-left:8px solid var(--easy);padding:10px 12px;margin-bottom:6px;border:1px solid var(--line);border-left-width:8px}
+.s.quality{border-left-color:var(--qual)}.s.long{border-left-color:var(--long)}.s.race{border-left-color:var(--race)}
+.s.done{opacity:.55}
+.top{display:flex;justify-content:space-between;align-items:baseline}
+.top b{font:700 20px var(--f1)}
+.km{font:700 22px var(--f1)}
+.meta{color:var(--mute);font-size:14px;margin:2px 0 6px}
+.det{font-size:15px;margin:0 0 8px}
+.acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.acts button,.acts select{font:500 14px var(--f2);padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.acts button.on{background:var(--long);color:#fff;border-color:var(--long)}
+.warn{background:var(--warnbg);color:var(--warn);font-size:13px;padding:6px 10px;border-radius:8px;margin-top:8px}
+.foot{color:var(--mute);font-size:13px;margin:22px 0 8px}
+button:focus-visible,select:focus-visible{outline:3px solid var(--qual);outline-offset:2px}
+[hidden]{display:none!important}
+.tabs{display:flex;gap:6px;margin:0 0 10px}
+.tabs button{flex:1;font:700 17px var(--f1);padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;margin-top:8px}
+.cal .hd{font-size:12px;color:var(--mute);text-align:center}
+.cal .c{min-height:66px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:3px;font-size:11px;cursor:pointer;overflow:hidden}
+.cal .c.out{opacity:.35}.cal .c.td{outline:2px solid var(--qual)}
+.c .n{color:var(--mute)}
+.pill{display:block;border-radius:4px;color:#fff;padding:0 3px;margin-top:2px;font-weight:500;white-space:nowrap;background:var(--easy)}
+.pill.quality{background:var(--qual)}.pill.long{background:var(--long)}.pill.race{background:var(--race)}.pill.gymp{background:var(--mute)}
+.tbl{width:100%;border-collapse:collapse;margin:8px 0}
+.tbl th,.tbl td{padding:8px 4px;border-bottom:1px solid var(--line);text-align:left;font-size:15px;vertical-align:top}
+.tbl small{display:block;color:var(--mute);font-size:12px}
+.frm{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:8px 0}
+.frm input,.frm button{font:400 15px var(--f2);padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0}
+.frm button{grid-column:1/-1;background:var(--ink);color:var(--bg)}
+.rl{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
+.rl button{border:0;background:none;color:var(--mute);font-size:18px}
+.prompt{background:var(--card);border:2px solid var(--qual);border-radius:12px;padding:12px;margin:0 0 12px}
+.prompt b{font:700 20px var(--f1)}
+.rate{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:10px 0}
+.rate button{font:700 20px var(--f1);padding:12px 0;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Run Plan</h1>
+<p class="sub" id="sub"></p>
+<div class="sum"><button class="gym" id="sync">Sync runs</button><span class="chip" id="syncst">Not synced yet</span></div>
+<div id="prompt"></div>
+<div class="tabs"><button id="tab-week" class="on" onclick="showTab('week')">Week</button><button id="tab-month" onclick="showTab('month')">Month</button><button id="tab-pred" onclick="showTab('pred')">Predict</button></div>
+<div id="weekview"><div class="nav"><button id="prev" aria-label="Previous week">&lsaquo;</button>
+<div class="mid"><b id="wt"></b><span id="wd"></span></div>
+<button id="next" aria-label="Next week">&rsaquo;</button></div>
+<div class="nav" style="justify-content:center;margin-top:0"><button id="today" style="width:auto;padding:0 14px;font:500 14px var(--f2)">This week</button></div>
+<div class="sum" id="sum"></div>
+<div id="days"></div></div><div id="monthview" hidden></div><div id="predview" hidden></div>
+<p class="foot">Heart-rate zones use max HR 187 bpm and are a first estimate. They will be refined from your uploaded runs. Gym sessions are not part of the plan: log them with the Gym button and the app flags hard runs on the same or next day.</p>
+</div>
+<script>
+// ---------- Settings ----------
+var MAXHR = 187;
+var PLAN_START = "2026-11-28";   // Saturday
+var RACE_DATE  = "2027-03-14";   // Sunday
+var FIRST_MONDAY = "2026-11-30"; // week 1
+var DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+var EASY_PACE = "6:10–6:30", EASY_HR = "122–148 bpm";
+
+// ---------- Date helpers (local, noon to avoid DST issues) ----------
+function P(s){var a=s.split("-").map(Number);return new Date(a[0],a[1]-1,a[2],12)}
+function F(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function add(s,n){var d=P(s);d.setDate(d.getDate()+n);return F(d)}
+function nice(s){var d=P(s);return DAYS[(d.getDay()+6)%7]+" "+d.getDate()+"."+(d.getMonth()+1)+"."}
+function short(s){var d=P(s);return d.getDate()+"."+(d.getMonth()+1)+"."}
+
+// ---------- Plan generator ----------
+// [week, phase, weekly km, long run km, quality title, quality detail, pace, HR]
+var Q_INT="165–178 bpm", Q_TMP="155–168 bpm", Q_FRT="130–160 bpm";
+var W=[
+[1,"Build",24,9,"Intervals","5 × 800 m, 400 m jog between","5:05–5:10",Q_INT],
+[2,"Build",26,10,"Tempo","3 × 8 min, 2 min jog between","5:20–5:25",Q_TMP],
+[3,"Build",28,11,"Intervals","6 × 800 m, 400 m jog between","5:05–5:10",Q_INT],
+[4,"Deload",22,9,"Fartlek","Easy run with 6 × 1 min faster, 2 min easy","by feel",Q_FRT],
+[5,"Build",29,12,"Intervals","4 × 1000 m, 400 m jog between","5:05",Q_INT],
+[6,"Build",31,13,"Tempo","2 × 15 min, 3 min jog between","5:15–5:20",Q_TMP],
+[7,"Build",33,14,"Intervals","5 × 1200 m, 400 m jog between","5:05",Q_INT],
+[8,"Deload",26,11,"Fartlek","Easy run with 6 × 1 min faster, 2 min easy","by feel",Q_FRT],
+[9,"Build",34,15,"Tempo","3 × 12 min, 2 min jog between","5:15",Q_TMP],
+[10,"Build",36,16,"Intervals","6 × 1000 m, 400 m jog between","5:00–5:05",Q_INT],
+[11,"Build",38,18,"Tempo","8 km steady","5:12–5:15",Q_TMP],
+[12,"Deload",29,12,"Fartlek","Easy run with 6 × 1 min faster, 2 min easy","by feel",Q_FRT],
+[13,"Peak",38,18,"Race pace","2 × 5 km at half-marathon pace, 2 min jog","5:13",Q_TMP],
+[14,"Taper",30,13,"Intervals","3 × 1000 m, 400 m jog between","5:05",Q_INT]
+];
+function buildPlan(){
+  var out=[];
+  out.push({n:0,phase:"Start",label:"Start week",mon:add(PLAN_START,-5),sessions:[
+    {id:"w0a",type:"easy",title:"Easy run",km:5,pace:EASY_PACE,hr:EASY_HR,det:"Relaxed start. Stop if anything hurts.",date:PLAN_START},
+    {id:"w0b",type:"long",title:"Long run",km:7,pace:EASY_PACE,hr:EASY_HR,det:"Easy and steady. Talk in full sentences.",date:add(PLAN_START,1)}]});
+  W.forEach(function(w){
+    var mon=add(FIRST_MONDAY,7*(w[0]-1)),km=w[2],lg=w[3],q=Math.round(km*0.3),easy=km-lg-q,tue=Math.round(easy*0.6),sat=easy-tue,n=w[0];
+    out.push({n:n,phase:w[1],label:"Week "+n,mon:mon,sessions:[
+      {id:"w"+n+"a",type:"easy",title:"Easy run",km:tue,pace:EASY_PACE,hr:EASY_HR,det:"Relaxed. You can talk in full sentences.",date:add(mon,1)},
+      {id:"w"+n+"b",type:"quality",title:w[4],km:q,pace:w[6],hr:w[7],det:w[5]+". Include about 2 km easy warm-up and 2 km cool-down.",date:add(mon,3)},
+      {id:"w"+n+"c",type:"easy",title:"Easy run",km:sat,pace:EASY_PACE,hr:EASY_HR,det:"Short and easy to loosen the legs for Sunday.",date:add(mon,5)},
+      {id:"w"+n+"d",type:"long",title:"Long run",km:lg,pace:EASY_PACE,hr:EASY_HR,det:"Slow and steady. Practice drinking if over 14 km.",date:add(mon,6)}]});
+  });
+  var m=add(FIRST_MONDAY,98);
+  out.push({n:15,phase:"Race",label:"Race week",mon:m,sessions:[
+    {id:"w15a",type:"easy",title:"Easy run",km:6,pace:EASY_PACE,hr:EASY_HR,det:"Easy. Legs should feel fresh.",date:add(m,1)},
+    {id:"w15b",type:"quality",title:"Sharpener",km:5,pace:"5:13 for 4 × 400 m",hr:Q_TMP,det:"Easy jog with 4 × 400 m at goal pace, full recovery.",date:add(m,3)},
+    {id:"w15c",type:"easy",title:"Shakeout",km:3,pace:EASY_PACE,hr:EASY_HR,det:"Very easy 20 minutes.",date:add(m,5)},
+    {id:"w15d",type:"race",title:"Half marathon",km:21.1,pace:"5:13 (goal 1:50:00)",hr:"150–172 bpm",det:"Start slightly slower than 5:13 for the first 3 km, then settle in.",date:RACE_DATE}]});
+  return out;
+}
+var PLAN=buildPlan();
+
+// ---------- State ----------
+var S={moves:{},done:{},gym:{},rpe:{},runs:null,acts:[],token:"",skip:{},last:0};
+try{var raw=localStorage.getItem("runplan1");if(raw)S=Object.assign(S,JSON.parse(raw))}catch(e){}
+function save(){try{localStorage.setItem("runplan1",JSON.stringify(S))}catch(e){}}
+function dateOf(s){return S.moves[s.id]||s.date}
+function hard(t){return t==="quality"||t==="long"||t==="race"}
+
+// ---------- Helpers ----------
+var cur=0;
+function weekIndexFor(iso){for(var i=PLAN.length-1;i>=0;i--){if(iso>=PLAN[i].mon)return i}return 0}
+function allSessions(){var a=[];PLAN.forEach(function(w){w.sessions.forEach(function(s){a.push(s)})});return a}
+function hardDates(excludeId){var o={};allSessions().forEach(function(s){if(s.id!==excludeId&&hard(s.type))o[dateOf(s)]=true});return o}
+function warnings(s,date){
+  var w=[],h=hard(s.type);if(!h)return w;
+  var hd=hardDates(s.id);
+  if(hd[date])w.push("Another hard session is on this day.");
+  if(hd[add(date,-1)]||hd[add(date,1)])w.push("Hard sessions on back-to-back days. Keep a rest or easy day between.");
+  if(hasGym(date))w.push("Gym on the same day. Consider moving this run.");
+  if(hasGym(add(date,-1)))w.push("Gym yesterday. Legs may be tired, run it by feel or move it.");
+  return w;
+}
+function runsOn(date){return allSessions().filter(function(s){return dateOf(s)===date})}
+function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!==undefined)e.innerHTML=h;return e}
+
+// ---------- Render ----------
+function render(){
+  LF=loadFactor();var w=PLAN[cur],today=F(new Date());
+  var dl=Math.round((P(RACE_DATE)-P(today))/864e5);
+  document.getElementById("sub").textContent=(dl>0?dl+" days to the half marathon on 14 Mar":dl===0?"Race day!":"Race done")+". Goal 1:50:00 (5:13 min/km).";
+  document.getElementById("wt").textContent=w.label+" · "+w.phase;
+  document.getElementById("wd").textContent=short(w.mon)+" – "+short(add(w.mon,6));
+  document.getElementById("prev").disabled=cur===0;document.getElementById("next").disabled=cur===PLAN.length-1;
+  var sessions=allSessions().filter(function(s){var d=dateOf(s);return d>=w.mon&&d<=add(w.mon,6)});
+  var km=sessions.reduce(function(a,s){return a+dispKm(s)},0),dn=sessions.filter(function(s){return isDone(s)}).length;
+  var sum=document.getElementById("sum");sum.innerHTML="";
+  [Math.round(km*10)/10+" km planned",sessions.length+" runs",dn+" done"].forEach(function(t){sum.appendChild(el("span","chip",t))});if(LF.f!==1)sum.appendChild(el("span","chip","Recent runs felt "+(LF.f<1?"harder":"easier")+" than planned: upcoming volume "+(LF.f>1?"+":"")+Math.round((LF.f-1)*100)+"%"));
+  var box=document.getElementById("days");box.innerHTML="";
+  for(var i=0;i<7;i++){
+    var date=add(w.mon,i);if(date<PLAN_START)continue;
+    var day=el("div","day"),dh=el("div","dh"+(date===today?" today":""),"<b>"+nice(date)+(date===today?" · today":"")+"</b>");
+    var g=el("button","gym"+(hasGym(date)?" on":""),hasGym(date)?"Gym logged":"+ Gym");
+    g.onclick=(function(d){return function(){if(S.gym[d])delete S.gym[d];else S.gym[d]=true;save();render()}})(date);
+    dh.appendChild(g);day.appendChild(dh);
+    var rs=runsOn(date);
+    if(!rs.length)day.appendChild(el("div","rest","Rest day"));
+    rs.forEach(function(s){day.appendChild(card(s,date,w))});
+    box.appendChild(day);
+  }
+}
+function card(s,date,w){
+  var c=el("div","s "+s.type+(isDone(s)?" done":""));
+  c.appendChild(el("div","top","<b>"+s.title+"</b><span class='km'>"+dispKm(s)+" km</span>"));
+  c.appendChild(el("div","meta","Pace "+s.pace+" min/km · HR "+s.hr));
+  c.appendChild(el("p","det",s.det));
+  var a=el("div","acts");
+  var act=actFor(s);
+  if(act){a.appendChild(el("span","chip","✓ "+act.km+" km · "+pc(act.sec,act.km)+(act.hr?" · HR "+Math.round(act.hr):"")));
+    var rp=el("select");rp.setAttribute("aria-label","How hard did it feel, 1 to 10");
+    rp.appendChild(new Option("How hard? 1–10",""));
+    for(var k=1;k<=10;k++)rp.appendChild(new Option(k+(k===1?" – very easy":k===5?" – moderate":k===10?" – maximal":""),k));
+    rp.value=S.rpe[act.id]||"";rp.onchange=function(){if(rp.value)S.rpe[act.id]=Number(rp.value);else delete S.rpe[act.id];save();render();renderPrompt()};a.appendChild(rp)}
+  else{var d=el("button",S.done[s.id]?"on":"",S.done[s.id]?"Done ✓":"Mark done");
+    d.onclick=function(){if(S.done[s.id])delete isDone(s);else isDone(s)=true;save();render()};a.appendChild(d)}
+  var sel=el("select");sel.setAttribute("aria-label","Move to another day");
+  sel.appendChild(new Option("Move to…",""));
+  for(var i=0;i<7;i++){var dd=add(w.mon,i);if(dd<PLAN_START||dd===date)continue;
+    if(s.type==="race")continue;sel.appendChild(new Option(nice(dd),dd))}
+  if(s.type!=="race")a.appendChild(sel);
+  sel.onchange=function(){if(!sel.value)return;if(sel.value===s.date)delete S.moves[s.id];else S.moves[s.id]=sel.value;save();render()};
+  c.appendChild(a);
+  warnings(s,date).forEach(function(t){c.appendChild(el("div","warn","⚠ "+t))});
+  return c;
+}
+document.getElementById("prev").onclick=function(){if(cur>0){cur--;render()}};
+document.getElementById("next").onclick=function(){if(cur<PLAN.length-1){cur++;render()}};
+document.getElementById("today").onclick=function(){cur=weekIndexFor(F(new Date()));render()};
+var LF={f:1,dev:0,n:0},EXP={easy:4,long:5,quality:7};
+function loadFactor(){var r=[];allSessions().forEach(function(x){var a=actFor(x);if(a&&S.rpe[a.id]&&x.type!=="race")r.push({d:dateOf(x),t:x.type,v:S.rpe[a.id]})});
+  r.sort(function(a,b){return a.d<b.d?1:-1});r=r.slice(0,4);
+  if(r.length<2)return{f:1,dev:0,n:r.length};
+  var dev=r.reduce(function(a,x){return a+x.v-EXP[x.t]},0)/r.length;
+  return{f:dev>=2?0.9:dev>=1?0.95:dev<=-2?1.05:1,dev:dev,n:r.length}}
+function dispKm(s){if(LF.f!==1&&!isDone(s)&&s.type!=="race"&&dateOf(s)>=F(new Date()))return Math.round(s.km*LF.f*2)/2;return s.km}
+function $(i){return document.getElementById(i)}
+var curTab="week";
+function showTab(t){curTab=t;renderPrompt();["week","month","pred"].forEach(function(x){$(x+"view").hidden=x!==t;$("tab-"+x).classList.toggle("on",x===t)});
+  if(t==="week")render();if(t==="month")renderMonth();if(t==="pred")renderPred()}
+var MIN="2026-11-01",MAX="2027-03-01",mo=MIN;
+function shift(n){var x=P(mo);x.setMonth(x.getMonth()+n);mo=F(x);renderMonth()}
+function renderMonth(){
+  LF=loadFactor();var box=$("monthview");box.innerHTML="";
+  var d=P(mo),dim=new Date(d.getFullYear(),d.getMonth()+1,0).getDate(),off=(d.getDay()+6)%7,rows=Math.ceil((off+dim)/7),today=F(new Date());
+  var nv=el("div","nav"),b1=el("button","","&lsaquo;"),b2=el("button","","&rsaquo;");
+  b1.disabled=mo<=MIN;b2.disabled=mo>=MAX;b1.onclick=function(){shift(-1)};b2.onclick=function(){shift(1)};
+  nv.appendChild(b1);nv.appendChild(el("div","mid","<b>"+d.toLocaleString("en",{month:"long",year:"numeric"})+"</b>"));nv.appendChild(b2);box.appendChild(nv);
+  var g=el("div","cal");DAYS.forEach(function(x){g.appendChild(el("div","hd",x))});
+  for(var i=0;i<rows*7;i++){(function(){var date=add(mo,i-off),inM=P(date).getMonth()===d.getMonth();
+    var c=el("div","c"+(inM?"":" out")+(date===today?" td":""),"<span class='n'>"+P(date).getDate()+"</span>");
+    runsOn(date).forEach(function(s){c.appendChild(el("span","pill "+s.type,dispKm(s)+(isDone(s)?" ✓":"")))});
+    if(hasGym(date))c.appendChild(el("span","pill gymp","Gym"));
+    c.onclick=function(){cur=weekIndexFor(date);showTab("week")};g.appendChild(c)})()}
+  box.appendChild(g);
+  box.appendChild(el("p","foot","Blue easy, orange quality, green long run, red race. A check mark means done. Tap a day to open its week."))}
+function parseT(t){var p=t.trim().split(":").map(Number);if(p.length<2||p.length>3||p.some(isNaN))return null;return p.length===3?p[0]*3600+p[1]*60+p[2]:p[0]*60+p[1]}
+function pad(n){return String(n).padStart(2,"0")}
+function fmt(sec){sec=Math.round(sec);var h=Math.floor(sec/3600),m=Math.floor(sec%3600/60);return(h?h+":"+pad(m):m)+":"+pad(sec%60)}
+function pc(sec,km){var p=Math.round(sec/km);return Math.floor(p/60)+":"+pad(p%60)+"/km"}
+function best(list,T){var b=null;list.forEach(function(r){if(r.km<3)return;var t=r.sec*Math.pow(T/r.km,T>21.1?1.07:1.06);if(!b||t<b.t)b={t:t,r:r}});return b}
+function renderPred(){
+  var box=$("predview");box.innerHTML="";var runs=S.acts.filter(isRun),today=F(new Date()),cut=add(today,-60);
+  var h2=el("h2","","Race time prediction");h2.style.cssText="font:700 22px var(--f1);margin:4px 0";box.appendChild(h2);
+  if(!runs.length){box.appendChild(el("p","det","Tap Sync runs to load your Garmin runs. Predictions appear here afterwards."));return}
+  var recent=runs.filter(function(r){return r.date>=cut});
+  var T=[["5 km",5],["10 km",10],["Half marathon",21.0975],["Marathon",42.195]];
+  var h="<table class='tbl'><tr><th>Distance</th><th>Now</th><th>Best ever</th></tr>",half=null;
+  T.forEach(function(t){var a=best(recent,t[1]),b=best(runs,t[1]);if(t[1]===21.0975)half=a;
+    function c(x){return x?fmt(x.t)+"<small>"+pc(x.t,t[1])+" · from "+x.r.km+" km, "+short(x.r.date)+"</small>":"–"}
+    h+="<tr><td>"+t[0]+"</td><td>"+c(a)+"</td><td>"+c(b)+"</td></tr>"});
+  box.appendChild(el("div","",h+"</table>"));
+  box.appendChild(el("p","det",half?"Half marathon goal 1:50:00. Current estimate "+fmt(half.t)+(half.t>6600?", about "+Math.round((half.t-6600)/60)+" min slower than goal.":", on track for the goal."):"No run in the last 60 days yet. Estimates will appear after your next synced run."));
+  box.appendChild(el("p","foot","Estimates use the Riegel formula (exponent 1.06, 1.07 beyond a half marathon) on the average pace of each synced Garmin run, so easy runs give cautious values. Real race or hard efforts raise the estimate. Marathon is the least reliable."))}
+var WORKER="https://runplan-api.npg96pz89h.workers.dev";
+function isRun(a){return /running/.test(a.type)}
+function isDone(s){return !!(S.done[s.id]||actFor(s))}
+function actFor(s){var d=dateOf(s);for(var i=0;i<S.acts.length;i++){if(S.acts[i].date===d&&isRun(S.acts[i]))return S.acts[i]}return null}
+function hasGym(d){return !!S.gym[d]||S.acts.some(function(a){return a.date===d&&/strength|gym|cardio|fitness/.test(a.type)})}
+function pending(){return S.acts.filter(function(a){return isRun(a)&&a.date>=PLAN_START&&!S.rpe[a.id]&&!S.skip[a.id]}).sort(function(a,b){return a.date<b.date?1:-1})}
+function renderPrompt(){
+  var box=$("prompt");box.innerHTML="";var p=pending();if(!p.length)return;var a=p[0];
+  var c=el("div","prompt","<b>New run: "+nice(a.date)+"</b><div class='meta'>"+a.km+" km · "+pc(a.sec,a.km)+(a.hr?" · HR "+Math.round(a.hr):"")+(p.length>1?" · "+(p.length-1)+" more to rate":"")+"</div><div>How hard did it feel? 1 = very easy, 10 = all-out</div>");
+  var g=el("div","rate");
+  for(var k=1;k<=10;k++){(function(k){var b=el("button","",String(k));b.onclick=function(){S.rpe[a.id]=k;save();showTab(curTab)};g.appendChild(b)})(k)}
+  c.appendChild(g);var sk=el("button","gym","Skip");sk.onclick=function(){S.skip[a.id]=true;save();renderPrompt()};c.appendChild(sk);box.appendChild(c)}
+function sync(){
+  var tok=S.token||prompt("Enter your access code (the APP_TOKEN you set in Cloudflare)");if(!tok)return;
+  $("syncst").textContent="Syncing…";
+  fetch(WORKER+"/api/runs?days=400",{headers:{"X-App-Token":tok}}).then(function(r){
+    if(r.status===401){S.token="";save();throw new Error("Wrong access code")}
+    return r.json().then(function(j){if(!r.ok)throw new Error(j.error||("Error "+r.status));return j})}).then(function(j){
+    S.token=tok;S.acts=j.runs||[];S.last=Date.now();save();
+    $("syncst").textContent=S.acts.length+" activities · synced "+new Date(S.last).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+    showTab(curTab)}).catch(function(e){$("syncst").textContent="Sync failed: "+e.message})}
+$("sync").onclick=sync;
+if(S.acts.length)$("syncst").textContent=S.acts.length+" activities · last sync "+new Date(S.last).toLocaleDateString();
+cur=weekIndexFor(F(new Date()));render();renderPrompt();if(S.token)sync();
+</script>
+</body>
+</html>
