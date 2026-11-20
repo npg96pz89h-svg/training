@@ -58,7 +58,7 @@ button:focus-visible,select:focus-visible{outline:3px solid var(--qual);outline-
 .cal .c.out{opacity:.35}.cal .c.td{outline:2px solid var(--qual)}
 .c .n{color:var(--mute)}
 .pill{display:block;border-radius:4px;color:#fff;padding:0 3px;margin-top:2px;font-weight:500;white-space:nowrap;background:var(--easy)}
-.pill.quality{background:var(--qual)}.pill.long{background:var(--long)}.pill.race{background:var(--race)}.pill.gymp{background:var(--mute)}
+.pill.quality{background:var(--qual)}.pill.long{background:var(--long)}.pill.race{background:var(--race)}.pill.gymp{background:var(--mute)}.pill.actual{background:transparent;color:var(--ink);border:1px solid var(--long)}
 .tbl{width:100%;border-collapse:collapse;margin:8px 0}
 .tbl th,.tbl td{padding:8px 4px;border-bottom:1px solid var(--line);text-align:left;font-size:15px;vertical-align:top}
 .tbl small{display:block;color:var(--mute);font-size:12px}
@@ -234,21 +234,23 @@ var curTab="week";
 function showTab(t){curTab=t;renderPrompt();["week","month","pred"].forEach(function(x){$(x+"view").hidden=x!==t;$("tab-"+x).classList.toggle("on",x===t)});
   if(t==="week")render();if(t==="month")renderMonth();if(t==="pred")renderPred()}
 var MIN="2026-11-01",MAX="2027-03-01",mo=MIN;
+function minMonth(){var m=MIN;S.acts.forEach(function(a){var x=a.date.slice(0,7)+"-01";if(a.date&&x<m)m=x});return m}
 function shift(n){var x=P(mo);x.setMonth(x.getMonth()+n);mo=F(x);renderMonth()}
 function renderMonth(){
   LF=loadFactor();var box=$("monthview");box.innerHTML="";
   var d=P(mo),dim=new Date(d.getFullYear(),d.getMonth()+1,0).getDate(),off=(d.getDay()+6)%7,rows=Math.ceil((off+dim)/7),today=F(new Date());
   var nv=el("div","nav"),b1=el("button","","&lsaquo;"),b2=el("button","","&rsaquo;");
-  b1.disabled=mo<=MIN;b2.disabled=mo>=MAX;b1.onclick=function(){shift(-1)};b2.onclick=function(){shift(1)};
+  b1.disabled=mo<=minMonth();b2.disabled=mo>=MAX;b1.onclick=function(){shift(-1)};b2.onclick=function(){shift(1)};
   nv.appendChild(b1);nv.appendChild(el("div","mid","<b>"+d.toLocaleString("en",{month:"long",year:"numeric"})+"</b>"));nv.appendChild(b2);box.appendChild(nv);
   var g=el("div","cal");DAYS.forEach(function(x){g.appendChild(el("div","hd",x))});
   for(var i=0;i<rows*7;i++){(function(){var date=add(mo,i-off),inM=P(date).getMonth()===d.getMonth();
     var c=el("div","c"+(inM?"":" out")+(date===today?" td":""),"<span class='n'>"+P(date).getDate()+"</span>");
     runsOn(date).forEach(function(s){c.appendChild(el("span","pill "+s.type,dispKm(s)+(isDone(s)?" ✓":"")))});
+    if(!runsOn(date).length)S.acts.forEach(function(a){if(a.date===date&&isRun(a))c.appendChild(el("span","pill actual","✓ "+a.km+" km"))});
     if(hasGym(date))c.appendChild(el("span","pill gymp","Gym"));
-    c.onclick=function(){cur=weekIndexFor(date);showTab("week")};g.appendChild(c)})()}
+    c.onclick=function(){if(date<PLAN_START)return;cur=weekIndexFor(date);showTab("week")};g.appendChild(c)})()}
   box.appendChild(g);
-  box.appendChild(el("p","foot","Blue easy, orange quality, green long run, red race. A check mark means done. Tap a day to open its week."))}
+  box.appendChild(el("p","foot","Blue easy, orange quality, green long run, red race. A check mark means done. Outlined runs are other synced runs outside the plan, including months before it started. Tap a day inside the plan to open its week."))}
 function parseT(t){var p=t.trim().split(":").map(Number);if(p.length<2||p.length>3||p.some(isNaN))return null;return p.length===3?p[0]*3600+p[1]*60+p[2]:p[0]*60+p[1]}
 function pad(n){return String(n).padStart(2,"0")}
 function fmt(sec){sec=Math.round(sec);var h=Math.floor(sec/3600),m=Math.floor(sec%3600/60);return(h?h+":"+pad(m):m)+":"+pad(sec%60)}
