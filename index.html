@@ -187,8 +187,8 @@ function render(){
   for(var i=0;i<7;i++){
     var date=add(w.mon,i);if(date<PLAN_START)continue;
     var day=el("div","day"),dh=el("div","dh"+(date===today?" today":""),"<b>"+nice(date)+(date===today?" · today":"")+"</b>");
-    var g=el("button","gym"+(hasGym(date)?" on":""),hasGym(date)?"Gym logged":"+ Gym");
-    g.onclick=(function(d){return function(){if(S.gym[d])delete S.gym[d];else S.gym[d]=true;save();render()}})(date);
+    var g=el("button","gym"+(hasGym(date)?" on":""),hasGym(date)?(loadLabel(date)||"Gym logged"):"+ Gym");
+    g.onclick=(function(d){return function(){if(loadActs(d).length)return;if(S.gym[d])delete S.gym[d];else S.gym[d]=true;save();render()}})(date);
     dh.appendChild(g);day.appendChild(dh);
     var rs=runsOn(date);
     if(!rs.length)day.appendChild(el("div","rest","Rest day"));
@@ -248,7 +248,7 @@ function renderMonth(){
     var c=el("div","c"+(inM?"":" out")+(date===today?" td":""),"<span class='n'>"+P(date).getDate()+"</span>");
     runsOn(date).forEach(function(s){c.appendChild(el("span","pill "+s.type,dispKm(s)+(isDone(s)?" ✓":"")))});
     if(!runsOn(date).length)S.acts.forEach(function(a){if(a.date===date&&isRun(a))c.appendChild(el("span","pill actual","✓ "+a.km+" km"))});
-    if(hasGym(date))c.appendChild(el("span","pill gymp","Gym"));
+    if(hasGym(date))c.appendChild(el("span","pill gymp",loadLabel(date)||"Gym"));
     c.onclick=function(){if(date<PLAN_START)return;cur=weekIndexFor(date);showTab("week")};g.appendChild(c)})()}
   box.appendChild(g);
   box.appendChild(el("p","foot","Blue easy, orange quality, green long run, red race. A check mark means done. Outlined runs are other synced runs outside the plan, including months before it started. Tap a day inside the plan to open its week."))}
@@ -285,7 +285,9 @@ var WORKER="https://runplan-api.npg96pz89h.workers.dev";
 function isRun(a){return /running/.test(a.type)}
 function isDone(s){return !!(S.done[s.id]||actFor(s))}
 function actFor(s){var d=dateOf(s);for(var i=0;i<S.acts.length;i++){if(S.acts[i].date===d&&isRun(S.acts[i]))return S.acts[i]}return null}
-function hasGym(d){return !!S.gym[d]||S.acts.some(function(a){return a.date===d&&/strength|gym|cardio|fitness/.test(a.type)})}
+function loadActs(d){return S.acts.filter(function(a){return a.date===d&&!isRun(a)&&/strength|gym|cardio|fitness|hiit|training|elliptical|stair|rowing|cycl|bik/.test(a.type)})}
+function hasGym(d){return !!S.gym[d]||loadActs(d).length>0}
+function loadLabel(d){var a=loadActs(d);if(!a.length)return S.gym[d]?"Gym":"";return a.map(function(x){return(/cycl|bik/.test(x.type)?"Bike ":"Gym ")+Math.round(x.sec/60)+" min"}).join(", ")}
 function pending(){return S.acts.filter(function(a){return isRun(a)&&a.date>=PLAN_START&&!S.rpe[a.id]&&!S.skip[a.id]}).sort(function(a,b){return a.date<b.date?1:-1})}
 function renderPrompt(){
   var box=$("prompt");box.innerHTML="";var p=pending();if(!p.length)return;var a=p[0];
