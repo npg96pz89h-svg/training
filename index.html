@@ -77,7 +77,7 @@ button:focus-visible,select:focus-visible{outline:3px solid var(--qual);outline-
 <div class="wrap">
 <h1>Run Plan</h1>
 <p class="sub" id="sub"></p>
-<div class="sum"><button class="gym" id="sync">Sync runs</button><span class="chip" id="syncst">Not synced yet</span></div>
+<div class="sum"><button class="gym" id="sync">Sync runs</button><span class="chip" id="syncst">Not synced yet</span><button class="gym" id="csum">Copy coach summary</button><button class="gym" id="cover">Apply plan update</button></div>
 <div id="prompt"></div>
 <div class="tabs"><button id="tab-week" class="on" onclick="showTab('week')">Week</button><button id="tab-month" onclick="showTab('month')">Month</button><button id="tab-pred" onclick="showTab('pred')">Predict</button></div>
 <div id="weekview"><div class="nav"><button id="prev" aria-label="Previous week">&lsaquo;</button>
@@ -148,7 +148,7 @@ function buildPlan(){
 var PLAN=buildPlan();
 
 // ---------- State ----------
-var S={moves:{},done:{},gym:{},rpe:{},runs:null,acts:[],token:"",skip:{},last:0};
+var S={moves:{},done:{},gym:{},rpe:{},runs:null,acts:[],token:"",skip:{},last:0,over:{}};
 try{var raw=localStorage.getItem("runplan1");if(raw)S=Object.assign(S,JSON.parse(raw))}catch(e){}
 function save(){try{localStorage.setItem("runplan1",JSON.stringify(S))}catch(e){}}
 function dateOf(s){return S.moves[s.id]||s.date}
@@ -310,6 +310,26 @@ function sync(days){
     $("syncst").textContent="Sync failed: "+e.message})}
 $("sync").onclick=function(){sync()};
 if(S.acts.length)$("syncst").textContent=S.acts.length+" activities · last sync "+new Date(S.last).toLocaleDateString();
+var OVF=["km","pace","hr","det","title","type"];
+function applyOver(){allSessions().forEach(function(x){var o=S.over&&S.over[x.id];if(o)OVF.forEach(function(k){if(o[k]!==undefined)x[k]=o[k]})})}
+function coachSummary(){
+  var today=F(new Date()),L=[],wi=PLAN[weekIndexFor(today)];
+  L.push("COACH SUMMARY "+today+" | Goal: half marathon 21.03.2027 in 1:50:00 | Max HR 187 | Plan week "+wi.n+" of 16");
+  L.push("Runs last 6 weeks (date | km | pace | avg HR | effort 1-10):");
+  S.acts.filter(function(a){return isRun(a)&&a.date>=add(today,-42)}).sort(function(a,b){return a.date<b.date?-1:1}).forEach(function(a){
+    L.push(a.date+" | "+a.km+" km | "+pc(a.sec,a.km)+" | "+(a.hr?Math.round(a.hr):"-")+" bpm | "+(S.rpe[a.id]||"-"))});
+  L.push("Plan sessions from 3 weeks ago to next week (id | date | session | status):");
+  allSessions().filter(function(x){return dateOf(x)>=add(today,-21)&&dateOf(x)<=add(today,7)}).sort(function(a,b){return dateOf(a)<dateOf(b)?-1:1}).forEach(function(x){
+    var a=actFor(x);L.push(x.id+" | "+dateOf(x)+" | "+x.title+" "+x.km+" km at "+x.pace+" | "+(a?"done "+a.km+" km, "+pc(a.sec,a.km):(dateOf(x)<today?"MISSED":"upcoming")))});
+  L.push("Gym/bike sessions last 3 weeks:");
+  for(var i=21;i>=0;i--){var d=add(today,-i),t=loadLabel(d);if(t)L.push(d+" | "+t)}
+  return L.join("\n")}
+$("csum").onclick=function(){var t=coachSummary();
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(function(){alert("Summary copied. Paste it into the coach chat.")},function(){prompt("Copy this text:",t)});
+  else prompt("Copy this text:",t)};
+$("cover").onclick=function(){var t=prompt("Paste the plan update from your coach");if(!t)return;
+  try{var o=JSON.parse(t);S.over=Object.assign(S.over||{},o);save();applyOver();render();alert("Plan updated.")}catch(e){alert("That text is not valid. Paste it exactly as sent.")}};
+applyOver();
 cur=weekIndexFor(F(new Date()));render();renderPrompt();if(S.token)sync();
 </script>
 </body>
