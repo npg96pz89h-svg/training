@@ -92,7 +92,7 @@ button:focus-visible,select:focus-visible{outline:3px solid var(--qual);outline-
 // ---------- Settings ----------
 var MAXHR = 187;
 var PLAN_START = "2026-11-28";   // Saturday
-var RACE_DATE  = "2027-03-14";   // Sunday
+var RACE_DATE  = "2027-03-21";   // Sunday
 var FIRST_MONDAY = "2026-11-30"; // week 1
 var DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 var EASY_PACE = "6:10–6:30", EASY_HR = "122–148 bpm";
@@ -120,8 +120,9 @@ var W=[
 [10,"Build",36,16,"Intervals","6 × 1000 m, 400 m jog between","5:00–5:05",Q_INT],
 [11,"Build",38,18,"Tempo","8 km steady","5:12–5:15",Q_TMP],
 [12,"Deload",29,12,"Fartlek","Easy run with 6 × 1 min faster, 2 min easy","by feel",Q_FRT],
-[13,"Peak",38,18,"Race pace","2 × 5 km at half-marathon pace, 2 min jog","5:13",Q_TMP],
-[14,"Taper",30,13,"Intervals","3 × 1000 m, 400 m jog between","5:05",Q_INT]
+[13,"Build",36,16,"Intervals","5 × 1200 m, 400 m jog between","5:03–5:05",Q_INT],
+[14,"Peak",40,20,"Race pace","2 × 5 km at half-marathon pace, 2 min jog","5:13",Q_TMP],
+[15,"Taper",30,13,"Intervals","3 × 1000 m, 400 m jog between","5:05",Q_INT]
 ];
 function buildPlan(){
   var out=[];
@@ -136,12 +137,12 @@ function buildPlan(){
       {id:"w"+n+"c",type:"easy",title:"Easy run",km:sat,pace:EASY_PACE,hr:EASY_HR,det:"Short and easy to loosen the legs for Sunday.",date:add(mon,5)},
       {id:"w"+n+"d",type:"long",title:"Long run",km:lg,pace:EASY_PACE,hr:EASY_HR,det:"Slow and steady. Practice drinking if over 14 km.",date:add(mon,6)}]});
   });
-  var m=add(FIRST_MONDAY,98);
-  out.push({n:15,phase:"Race",label:"Race week",mon:m,sessions:[
-    {id:"w15a",type:"easy",title:"Easy run",km:6,pace:EASY_PACE,hr:EASY_HR,det:"Easy. Legs should feel fresh.",date:add(m,1)},
-    {id:"w15b",type:"quality",title:"Sharpener",km:5,pace:"5:13 for 4 × 400 m",hr:Q_TMP,det:"Easy jog with 4 × 400 m at goal pace, full recovery.",date:add(m,3)},
-    {id:"w15c",type:"easy",title:"Shakeout",km:3,pace:EASY_PACE,hr:EASY_HR,det:"Very easy 20 minutes.",date:add(m,5)},
-    {id:"w15d",type:"race",title:"Half marathon",km:21.1,pace:"5:13 (goal 1:50:00)",hr:"150–172 bpm",det:"Start slightly slower than 5:13 for the first 3 km, then settle in.",date:RACE_DATE}]});
+  var m=add(FIRST_MONDAY,105);
+  out.push({n:16,phase:"Race",label:"Race week",mon:m,sessions:[
+    {id:"w16a",type:"easy",title:"Easy run",km:6,pace:EASY_PACE,hr:EASY_HR,det:"Easy. Legs should feel fresh.",date:add(m,1)},
+    {id:"w16b",type:"quality",title:"Sharpener",km:5,pace:"5:13 for 4 × 400 m",hr:Q_TMP,det:"Easy jog with 4 × 400 m at goal pace, full recovery.",date:add(m,3)},
+    {id:"w16c",type:"easy",title:"Shakeout",km:3,pace:EASY_PACE,hr:EASY_HR,det:"Very easy 20 minutes.",date:add(m,5)},
+    {id:"w16d",type:"race",title:"Half marathon",km:21.1,pace:"5:13 (goal 1:50:00)",hr:"150–172 bpm",det:"Start slightly slower than 5:13 for the first 3 km, then settle in.",date:RACE_DATE}]});
   return out;
 }
 var PLAN=buildPlan();
@@ -174,7 +175,7 @@ function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!==und
 function render(){
   LF=loadFactor();var w=PLAN[cur],today=F(new Date());
   var dl=Math.round((P(RACE_DATE)-P(today))/864e5);
-  document.getElementById("sub").textContent=(dl>0?dl+" days to the half marathon on 14 Mar":dl===0?"Race day!":"Race done")+". Goal 1:50:00 (5:13 min/km).";
+  document.getElementById("sub").textContent=(dl>0?dl+" days to the half marathon on 21 Mar":dl===0?"Race day!":"Race done")+". Goal 1:50:00 (5:13 min/km).";
   document.getElementById("wt").textContent=w.label+" · "+w.phase;
   document.getElementById("wd").textContent=short(w.mon)+" – "+short(add(w.mon,6));
   document.getElementById("prev").disabled=cur===0;document.getElementById("next").disabled=cur===PLAN.length-1;
@@ -292,16 +293,20 @@ function renderPrompt(){
   var g=el("div","rate");
   for(var k=1;k<=10;k++){(function(k){var b=el("button","",String(k));b.onclick=function(){S.rpe[a.id]=k;save();showTab(curTab)};g.appendChild(b)})(k)}
   c.appendChild(g);var sk=el("button","gym","Skip");sk.onclick=function(){S.skip[a.id]=true;save();renderPrompt()};c.appendChild(sk);box.appendChild(c)}
-function sync(){
+function sync(days){
+  days=days||90;
   var tok=S.token||prompt("Enter your access code (the APP_TOKEN you set in Cloudflare)");if(!tok)return;
   $("syncst").textContent="Syncing…";
-  fetch(WORKER+"/api/runs?days=400",{headers:{"X-App-Token":tok}}).then(function(r){
+  fetch(WORKER+"/api/runs?days="+days,{headers:{"X-App-Token":tok}}).then(function(r){
     if(r.status===401){S.token="";save();throw new Error("Wrong access code")}
     return r.json().then(function(j){if(!r.ok)throw new Error(j.error||("Error "+r.status));return j})}).then(function(j){
-    S.token=tok;S.acts=j.runs||[];S.last=Date.now();save();
+    var by={};S.acts.forEach(function(a){by[a.id]=a});(j.runs||[]).forEach(function(a){by[a.id]=a});
+    S.acts=Object.keys(by).map(function(k){return by[k]});S.token=tok;S.last=Date.now();save();
     $("syncst").textContent=S.acts.length+" activities · synced "+new Date(S.last).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
-    showTab(curTab)}).catch(function(e){$("syncst").textContent="Sync failed: "+e.message})}
-$("sync").onclick=sync;
+    showTab(curTab)}).catch(function(e){
+    if(/Load failed|Failed to fetch|NetworkError/i.test(e.message)&&days>30){sync(30);return}
+    $("syncst").textContent="Sync failed: "+e.message})}
+$("sync").onclick=function(){sync()};
 if(S.acts.length)$("syncst").textContent=S.acts.length+" activities · last sync "+new Date(S.last).toLocaleDateString();
 cur=weekIndexFor(F(new Date()));render();renderPrompt();if(S.token)sync();
 </script>
