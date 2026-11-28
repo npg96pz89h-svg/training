@@ -10,10 +10,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#eef1f5;--card:#fff;--ink:#16202e;--mute:#5d6b7e;--line:#d5dce6;
---easy:#3b82c4;--qual:#e08a00;--long:#1d7f6e;--race:#c0392b;--warn:#a15c00;--warnbg:#fff3dc;
+--easy:#3b82c4;--qual:#e08a00;--long:#1d7f6e;--race:#c0392b;--warn:#a15c00;--warnbg:#fff3dc;--donebg:#e3f3ec;
 --f1:"Barlow Condensed","Arial Narrow",sans-serif;--f2:"Barlow",system-ui,sans-serif}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1620;--card:#18222f;--ink:#e8eef6;--mute:#93a3b8;--line:#2a3646;
---easy:#5aa2e0;--qual:#f0a020;--long:#35b09c;--race:#ee6a5a;--warn:#f0b050;--warnbg:#3a2c10}}
+--easy:#5aa2e0;--qual:#f0a020;--long:#35b09c;--race:#ee6a5a;--warn:#f0b050;--warnbg:#3a2c10;--donebg:#12302a}}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:400 16px/1.4 var(--f2);padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
@@ -36,7 +36,11 @@ h1{font:700 30px/1 var(--f1);margin:0}
 .rest{color:var(--mute);font-size:14px;padding:8px 12px;border:1px dashed var(--line);border-radius:10px}
 .s{background:var(--card);border-radius:12px;border-left:8px solid var(--easy);padding:10px 12px;margin-bottom:6px;border:1px solid var(--line);border-left-width:8px}
 .s.quality{border-left-color:var(--qual)}.s.long{border-left-color:var(--long)}.s.race{border-left-color:var(--race)}
-.s.done{opacity:.55}
+.s.done{background:var(--donebg);border-color:var(--long)}
+.tick{display:inline-block;width:22px;height:22px;border-radius:50%;background:var(--long);color:#fff;text-align:center;line-height:22px;font-size:14px;margin-right:8px;vertical-align:1px}
+.pva{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}
+.pva span{display:block;font-size:12px;color:var(--mute)}.pva b{font:500 15px var(--f2)}
+.coach{font-size:14px;margin:6px 0 8px;padding:8px 10px;border-radius:8px;background:var(--bg)}
 .top{display:flex;justify-content:space-between;align-items:baseline}
 .top b{font:700 20px var(--f1)}
 .km{font:700 22px var(--f1)}
@@ -96,6 +100,7 @@ var RACE_DATE  = "2027-03-21";   // Sunday
 var FIRST_MONDAY = "2026-11-30"; // week 1
 var DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 var EASY_PACE = "6:10–6:30", EASY_HR = "122–148 bpm";
+function easyPace(n){return n<3?"6:10–6:30":n<6?"6:05–6:25":n<9?"6:00–6:20":"5:55–6:15"}
 
 // ---------- Date helpers (local, noon to avoid DST issues) ----------
 function P(s){var a=s.split("-").map(Number);return new Date(a[0],a[1]-1,a[2],12)}
@@ -108,21 +113,21 @@ function short(s){var d=P(s);return d.getDate()+"."+(d.getMonth()+1)+"."}
 // [week, phase, weekly km, long run km, quality title, quality detail, pace, HR]
 var Q_INT="165–178 bpm", Q_TMP="155–168 bpm", Q_FRT="130–160 bpm";
 var W=[
-[1,"Build",24,9,"Intervals","5 × 800 m, 400 m jog between","5:05–5:10",Q_INT],
-[2,"Build",26,10,"Tempo","3 × 8 min, 2 min jog between","5:20–5:25",Q_TMP],
-[3,"Build",28,11,"Intervals","6 × 800 m, 400 m jog between","5:05–5:10",Q_INT],
-[4,"Deload",22,9,"Fartlek","Easy run with 6 × 1 min faster, 2 min easy","by feel",Q_FRT],
-[5,"Build",29,12,"Intervals","4 × 1000 m, 400 m jog between","5:05",Q_INT],
-[6,"Build",31,13,"Tempo","2 × 15 min, 3 min jog between","5:15–5:20",Q_TMP],
-[7,"Build",33,14,"Intervals","5 × 1200 m, 400 m jog between","5:05",Q_INT],
-[8,"Deload",26,11,"Fartlek","Easy run with 6 × 1 min faster, 2 min easy","by feel",Q_FRT],
-[9,"Build",34,15,"Tempo","3 × 12 min, 2 min jog between","5:15",Q_TMP],
-[10,"Build",36,16,"Intervals","6 × 1000 m, 400 m jog between","5:00–5:05",Q_INT],
-[11,"Build",38,18,"Tempo","8 km steady","5:12–5:15",Q_TMP],
-[12,"Deload",29,12,"Fartlek","Easy run with 6 × 1 min faster, 2 min easy","by feel",Q_FRT],
-[13,"Build",36,16,"Intervals","5 × 1200 m, 400 m jog between","5:03–5:05",Q_INT],
-[14,"Peak",40,20,"Race pace","2 × 5 km at half-marathon pace, 2 min jog","5:13",Q_TMP],
-[15,"Taper",30,13,"Intervals","3 × 1000 m, 400 m jog between","5:05",Q_INT]
+[1,"Build",26,10,"Intervals","5 × 800 m, 400 m jog between","5:05–5:10",Q_INT],
+[2,"Build",28,11,"Tempo","3 × 8 min, 2 min jog between","5:20–5:25",Q_TMP],
+[3,"Build",30,12,"Intervals","6 × 800 m, 400 m jog between","5:05–5:10",Q_INT],
+[4,"Deload",24,10,"Fartlek","Easy run with 6 × 1 min faster, 2 min easy","by feel",Q_FRT],
+[5,"Build",32,13,"Intervals","4 × 1000 m, 400 m jog between","5:05",Q_INT],
+[6,"Build",34,14,"Tempo","2 × 15 min, 3 min jog between","5:15–5:20",Q_TMP],
+[7,"Build",36,15,"Intervals","5 × 1200 m, 400 m jog between","5:05",Q_INT],
+[8,"Deload",28,12,"Fartlek","Easy run with 6 × 1 min faster, 2 min easy","by feel",Q_FRT],
+[9,"Build",37,16,"Tempo","3 × 12 min, 2 min jog between","5:15",Q_TMP],
+[10,"Build",39,17,"Intervals","6 × 1000 m, 400 m jog between","5:00–5:05",Q_INT],
+[11,"Build",41,18,"Tempo","8 km steady","5:12–5:15",Q_TMP],
+[12,"Deload",31,13,"Fartlek","Easy run with 6 × 1 min faster, 2 min easy","by feel",Q_FRT],
+[13,"Build",40,17,"Intervals","5 × 1200 m, 400 m jog between","5:03–5:05",Q_INT],
+[14,"Peak",43,20,"Race pace","2 × 5 km at half-marathon pace, 2 min jog","5:13",Q_TMP],
+[15,"Taper",32,14,"Intervals","3 × 1000 m, 400 m jog between","5:05",Q_INT]
 ];
 function buildPlan(){
   var out=[];
@@ -132,10 +137,10 @@ function buildPlan(){
   W.forEach(function(w){
     var mon=add(FIRST_MONDAY,7*(w[0]-1)),km=w[2],lg=w[3],q=Math.round(km*0.3),easy=km-lg-q,tue=Math.round(easy*0.6),sat=easy-tue,n=w[0];
     out.push({n:n,phase:w[1],label:"Week "+n,mon:mon,sessions:[
-      {id:"w"+n+"a",type:"easy",title:"Easy run",km:tue,pace:EASY_PACE,hr:EASY_HR,det:"Relaxed. You can talk in full sentences.",date:add(mon,1)},
+      {id:"w"+n+"a",type:"easy",title:"Easy run",km:tue,pace:easyPace(n),hr:EASY_HR,det:"Relaxed. You can talk in full sentences.",date:add(mon,1)},
       {id:"w"+n+"b",type:"quality",title:w[4],km:q,pace:w[6],hr:w[7],det:w[5]+". Include about 2 km easy warm-up and 2 km cool-down.",date:add(mon,3)},
-      {id:"w"+n+"c",type:"easy",title:"Easy run",km:sat,pace:EASY_PACE,hr:EASY_HR,det:"Short and easy to loosen the legs for Sunday.",date:add(mon,5)},
-      {id:"w"+n+"d",type:"long",title:"Long run",km:lg,pace:EASY_PACE,hr:EASY_HR,det:"Slow and steady. Practice drinking if over 14 km.",date:add(mon,6)}]});
+      {id:"w"+n+"c",type:"easy",title:"Easy run",km:sat,pace:easyPace(n),hr:EASY_HR,det:"Short and easy to loosen the legs for Sunday.",date:add(mon,5)},
+      {id:"w"+n+"d",type:"long",title:"Long run",km:lg,pace:easyPace(n),hr:EASY_HR,det:"Slow and steady. Practice drinking if over 14 km.",date:add(mon,6)}]});
   });
   var m=add(FIRST_MONDAY,105);
   out.push({n:16,phase:"Race",label:"Race week",mon:m,sessions:[
@@ -182,7 +187,7 @@ function render(){
   var sessions=allSessions().filter(function(s){var d=dateOf(s);return d>=w.mon&&d<=add(w.mon,6)});
   var km=sessions.reduce(function(a,s){return a+dispKm(s)},0),dn=sessions.filter(function(s){return isDone(s)}).length;
   var sum=document.getElementById("sum");sum.innerHTML="";
-  [Math.round(km*10)/10+" km planned",sessions.length+" runs",dn+" done"].forEach(function(t){sum.appendChild(el("span","chip",t))});if(LF.f!==1)sum.appendChild(el("span","chip","Recent runs felt "+(LF.f<1?"harder":"easier")+" than planned: upcoming volume "+(LF.f>1?"+":"")+Math.round((LF.f-1)*100)+"%"));
+  [(Math.round(S.acts.filter(function(a){return isRun(a)&&a.date>=w.mon&&a.date<=add(w.mon,6)}).reduce(function(x,a){return x+a.km},0)*10)/10)+" km run of "+(Math.round(km*10)/10)+" km planned",dn+" of "+sessions.length+" runs done"].forEach(function(t){sum.appendChild(el("span","chip",t))});if(LF.f!==1)sum.appendChild(el("span","chip","Recent runs felt "+(LF.f<1?"harder":"easier")+" than planned: upcoming volume "+(LF.f>1?"+":"")+Math.round((LF.f-1)*100)+"%"));
   var box=document.getElementById("days");box.innerHTML="";
   for(var i=0;i<7;i++){
     var date=add(w.mon,i);if(date<PLAN_START)continue;
@@ -198,12 +203,19 @@ function render(){
 }
 function card(s,date,w){
   var c=el("div","s "+s.type+(isDone(s)?" done":""));
-  c.appendChild(el("div","top","<b>"+s.title+"</b><span class='km'>"+dispKm(s)+" km</span>"));
-  c.appendChild(el("div","meta","Pace "+s.pace+" min/km · HR "+s.hr));
-  c.appendChild(el("p","det",s.det));
+  var a0=actFor(s);
+  if(a0){
+    c.appendChild(el("div","top","<b><span class='tick'>✓</span>"+s.title+" completed</b><span class='km'>"+a0.km+" km</span>"));
+    c.appendChild(el("div","pva","<div><span>Planned</span><b>"+dispKm(s)+" km · "+s.pace+"</b></div><div><span>Actual</span><b>"+a0.km+" km · "+pc(a0.sec,a0.km)+(a0.hr?" · HR "+Math.round(a0.hr):"")+"</b></div>"));
+    var cn=coachNote(s,a0);if(cn)c.appendChild(el("p","coach","<b>Coach:</b> "+cn));
+  }else{
+    c.appendChild(el("div","top","<b>"+s.title+"</b><span class='km'>"+dispKm(s)+" km</span>"));
+    c.appendChild(el("div","meta","Pace "+s.pace+" min/km · HR "+s.hr));
+    c.appendChild(el("p","det",s.det));
+  }
   var a=el("div","acts");
   var act=actFor(s);
-  if(act){a.appendChild(el("span","chip","✓ "+act.km+" km · "+pc(act.sec,act.km)+(act.hr?" · HR "+Math.round(act.hr):"")));
+  if(act){
     var rp=el("select");rp.setAttribute("aria-label","How hard did it feel, 1 to 10");
     rp.appendChild(new Option("How hard? 1–10",""));
     for(var k=1;k<=10;k++)rp.appendChild(new Option(k+(k===1?" – very easy":k===5?" – moderate":k===10?" – maximal":""),k));
@@ -310,6 +322,28 @@ function sync(days){
     $("syncst").textContent="Sync failed: "+e.message})}
 $("sync").onclick=function(){sync()};
 if(S.acts.length)$("syncst").textContent=S.acts.length+" activities · last sync "+new Date(S.last).toLocaleDateString();
+function secs(t){var m=t.match(/(\d):(\d\d)/g);if(!m)return null;var v=m.slice(0,2).map(function(x){var q=x.split(":");return +q[0]*60+ +q[1]});return v.length===1?[v[0],v[0]]:[Math.min(v[0],v[1]),Math.max(v[0],v[1])]}
+function coachNote(s,a){
+  if(s.type==="race")return "Race done. Rest well and review how the pacing felt.";
+  var good=[],imp=[],pace=a.sec/a.km,pk=dispKm(s),r=a.km/pk,rp=S.rpe[a.id],hr=a.hr;
+  if(r>=0.9&&r<=1.15)good.push("You covered the planned distance.");
+  else if(r<0.9)imp.push("You stopped short of the planned "+pk+" km. Finish the full distance next time if the legs allow.");
+  else imp.push("You ran "+(a.km-pk).toFixed(1)+" km more than planned. Stay with the plan so the quality days stay fresh.");
+  if(s.type==="quality"){
+    if(rp>=9)imp.push("Rated "+rp+"/10, so keep the next day easy.");
+    else if(rp&&rp<=5)good.push("It felt controlled at "+rp+"/10, so there is room to push the paces later.");
+    else good.push("Judge this session by how the reps felt, since the average pace includes warm-up and recovery.");
+  }else{
+    var pr=secs(s.pace);
+    if(pr){if(pace<pr[0]-10)imp.push("Your pace was faster than the planned "+s.pace+". Slow down so the quality days stay sharp.");
+      else if(pace>pr[1]+20)imp.push("A bit slower than planned. That is fine if it felt easy, since effort matters more than pace.");
+      else good.push("Your pace was right in the planned range.")}
+    if(hr){if(hr>148)imp.push("Average heart rate of "+Math.round(hr)+" bpm is above the easy zone. Slow down until it stays under about 148.");
+      else good.push("Heart rate stayed in the easy zone ("+Math.round(hr)+" bpm on average).")}
+    if(rp&&rp>=7)imp.push("You rated it "+rp+"/10, which is hard for this run type. Watch your recovery.");
+  }
+  var o=[];if(good.length)o.push(good[0]);if(imp.length)o.push(imp[0]);if(o.length<2&&good.length>1)o.push(good[1]);
+  return o.join(" ")}
 var OVF=["km","pace","hr","det","title","type"];
 function applyOver(){allSessions().forEach(function(x){var o=S.over&&S.over[x.id];if(o)OVF.forEach(function(k){if(o[k]!==undefined)x[k]=o[k]})})}
 function coachSummary(){
